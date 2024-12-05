@@ -1,0 +1,19 @@
+** Instalación
+1. Clona el repositorio:
+   #+BEGIN_SRC sh
+   git clone https://github.com/tu-usuario/tu-repositorio.git
+   #+END_SRC
+2. Navega al directorio del proyecto:
+   #+BEGIN_SRC sh
+   cd tu-repositorio
+   #+END_SRC
+3. Instala las dependencias:
+   #+BEGIN_SRC sh
+   npm install
+   #+END_SRC
+
+** Ejecución
+Para iniciar el servidor de desarrollo, ejecuta:
+#+BEGIN_SRC sh
+npm run dev
+#+END_SRC
