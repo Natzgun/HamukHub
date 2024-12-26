@@ -18,7 +18,7 @@ const ScholarshipPage = () => {
       <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
         {becas.map((beca) => (
           <div
-            key={beca._id}
+            key={beca.id}
             className='rounded-lg shadow-lg flex flex-col justify-between'
           >
             <img
@@ -54,7 +54,7 @@ const ScholarshipPage = () => {
               <div className='gap-x-2'>
                 <button
                   onClick={() => {
-                    eliminarBeca(beca._id);
+                    eliminarBeca(beca.id);
                   }}
                   type='submit'
                   className='rounded-md text-green-50 px-6 py-3 my-2 flex items-center bg-red-500 hover:bg-red-600'
@@ -62,7 +62,7 @@ const ScholarshipPage = () => {
                   Eliminar
                 </button>
                 <Link
-                  to={`/beca/${beca._id}`}
+                  to={`/beca/${beca.id}`}
                   type='submit'
                   className='rounded-md text-green-50 px-6 py-3 my-2 flex items-center bg-green-500 hover:bg-green-600'
                 >

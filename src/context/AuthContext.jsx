@@ -71,7 +71,6 @@ export const AuthProvider = ({ children }) => {
       try {
         // Aqui verificamos si el token es valido
         const res = await verifyTokenRequest(cookies.token);
-        alert(res);
         // console.log(res);
         // Si es valido el backend nos responde
         if (!res.data) {

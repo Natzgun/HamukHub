@@ -23,9 +23,6 @@ const Profile = () => {
           <p className='text-slate-600 text-2xl font-bold mb-2'>
             Correo: <span className='font-normal'>{user.email}</span>
           </p>
-          <p className='text-slate-600 text-2xl font-bold'>
-            Carrera: <span className='font-normal'>{user.career}</span>
-          </p>
         </div>
       </div>
       </div>

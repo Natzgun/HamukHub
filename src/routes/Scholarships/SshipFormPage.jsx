@@ -34,6 +34,7 @@ const SshipFormPage = () => {
   }, []);
 
   const onSubmitReg = handleSubmit((data) => {
+    console.log(data);
     if (params.id) {
       actualizarBeca(params.id, {
         ...data,

@@ -42,7 +42,8 @@ export function SshipProvider({ children }) {
   const eliminarBeca = async (id) => {
     try {
       const res = await deleteBecaRequest(id);
-      if (res.status === 204) setBeca(becas.filter((beca) => beca._id !== id));
+      if (res.status === 204) setBeca(becas.filter((beca) => beca.id !== id));
+      alert('Beca eliminada');
     } catch (error) {
       console.log(error);
     }
