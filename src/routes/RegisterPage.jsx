@@ -12,15 +12,23 @@ const RegisterPage = () => {
   const { isAuthenticated, signup, user, errors: registerErrors } = useAuth();
   const navigation = useNavigate();
 
-  useEffect(() => {
+  // CORREGIR ESTO
+  /*useEffect(() => {
     if (isAuthenticated && user.email !== 'erickmalcoaccha@gmail.com') {
       navigation('/scholarships');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated]);*/
 
   const onSubmitReg = handleSubmit(async (values) => {
-    signup(values);
+    // Add the default role to the submission values
+    const payload = {
+      ...values,
+      roles: ["USER"],
+    };
+    console.log('Datos enviados:', payload);
+    signup(payload);
   });
+
   return (
     <div className='flex h-[calc(100vh)] items-center justify-center bg-slate-50 text-gray-300'>
       <div className='bg-white max-w-md w-full p-10 rounded-lg shadow-xl'>
@@ -50,14 +58,6 @@ const RegisterPage = () => {
           {errors.email && <p className='text-red-500'>Email es requerido</p>}
 
           <input
-            type='text'
-            {...register('career', { required: false })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Carrera'
-          ></input>
-          {errors.career && <p className='text-yellow-300'>La carrera es opcional</p>}
-
-          <input
             type='password'
             {...register('password', { required: true })}
             className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
@@ -66,12 +66,15 @@ const RegisterPage = () => {
           {errors.password && (
             <p className='text-red-500'>Contraseña es requerida</p>
           )}
-          <button type='submit' className='rounded-md text-green-50 px-6 py-3 my-2 flex items-center bg-green-500 hover:bg-green-600'>
+
+          <button
+            type='submit'
+            className='rounded-md text-green-50 px-6 py-3 my-2 flex items-center bg-green-500 hover:bg-green-600'>
             Registrarse
           </button>
         </form>
         <p className='flex gap-x-2 justify-between'>
-          Ya tienes una cuenta? <Link to='/login' className='text-sky-500'>Inicia Sesión</Link>{' '}
+          Ya tienes una cuenta? <Link to='/login' className='text-sky-500'>Inicia Sesión</Link>
         </p>
       </div>
     </div>
