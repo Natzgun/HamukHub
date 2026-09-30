@@ -1,19 +1,41 @@
-** Instalación
-1. Clona el repositorio:
-   #+BEGIN_SRC sh
-   git clone https://github.com/tu-usuario/tu-repositorio.git
-   #+END_SRC
-2. Navega al directorio del proyecto:
-   #+BEGIN_SRC sh
-   cd tu-repositorio
-   #+END_SRC
-3. Instala las dependencias:
-   #+BEGIN_SRC sh
-   npm install
-   #+END_SRC
+* Hamuk
 
-** Ejecución
-Para iniciar el servidor de desarrollo, ejecuta:
+Frontend de becas para la API de ProceedHub. Permite consultar y filtrar convocatorias, crear cuentas,
+iniciar sesión y gestionar becas cuando el usuario tiene el rol =ADMIN=.
+
+** Iniciar en desarrollo
+
+1. Inicia ProceedHub en =http://localhost:8086= con PostgreSQL y sus variables de entorno.
+2. Configura =CORS_ALLOWED_ORIGINS=http://localhost:5173= en el backend.
+3. Instala dependencias y ejecuta Vite:
+
 #+BEGIN_SRC sh
+npm ci
 npm run dev
+#+END_SRC
+
+La URL de API predeterminada es =http://localhost:8086/api=. Para cambiarla, define
+=VITE_API_URL= en =.env.local= (consulta =.env.example=) antes de iniciar o compilar Vite.
+La URL debe terminar en =/api=, sin barra final. En producción, usa la URL pública del
+backend accesible desde el navegador, no el nombre interno de un contenedor.
+Si abres Vite desde =http://127.0.0.1:5173=, usa también =http://127.0.0.1:8086/api=
+como URL de API y añade ese origen a =CORS_ALLOWED_ORIGINS=, separado por coma.
+Con cookies =SameSite=Lax=, evita mezclar =localhost= y =127.0.0.1= entre el navegador y la API.
+
+** Sesión y administración
+
+El backend almacena el JWT en una cookie =HttpOnly=. El frontend verifica la sesión mediante
+=GET /api/users/verifyToken= y obtiene el token CSRF antes de cada operación de escritura.
+El registro crea una cuenta =USER=; después es necesario iniciar sesión. El rol =ADMIN=
+se aprovisiona fuera del registro público. Cerrar sesión borra la cookie desde
+=POST /api/users/logout=; por ello esta versión del frontend requiere la versión del backend
+que incluye ese endpoint.
+La fecha que muestra cada beca es la fecha de publicación que asigna el backend; no
+existe un campo de fecha límite en la API actual.
+
+** Verificar cambios
+
+#+BEGIN_SRC sh
+npm test
+npm run build
 #+END_SRC

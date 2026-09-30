@@ -1,70 +1,37 @@
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
-import { useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
-  const { isAuthenticated, signin, user, errors: signinErrors } = useAuth();
+  const { register, handleSubmit, formState: { errors: fieldErrors, isSubmitting } } = useForm();
+  const { isAuthenticated, loading, signin, errors, clearErrors } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  if (isAuthenticated) return <Navigate to={location.state?.from || '/profile'} replace />;
 
-  const navigation = useNavigate();
-
-  useEffect(() => {
-    if (isAuthenticated && user.email !== 'erickmalcoaccha@gmail.com') {
-      navigation('/scholarships');
-    } else if (isAuthenticated && user.email == 'erickmalcoaccha@gmail.com') { 
-      navigation('/profile');
-    }
-  }, [isAuthenticated]);
-
-  const onSubmitReg = handleSubmit((values) => {
-    signin(values);
+  const onSubmit = handleSubmit(async (values) => {
+    if (await signin(values)) navigate(location.state?.from || '/profile', { replace: true });
   });
-  return (
-    <div
-      data-name='login'
-      className='flex h-[calc(100vh)] items-center justify-center bg-slate-50 text-gray-300'
-    >
-      <div className='bg-white max-w-md w-full p-10 rounded-lg shadow-xl'>
-        <h2 className='text-3xl mb-3 text-slate-500 font-bold'>Login</h2>
-        {signinErrors.map((error, i) => (
-          <div className='bg-red-500 p-2 my-2' key={i}>
-            {error}
-          </div>
-        ))}
-        <form onSubmit={onSubmitReg}>
-          <input
-            type='name'
-            {...register('username', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Username'
-          ></input>
-          {errors.username && <p className='text-red-500'>Username es requerido</p>}
 
-          <input
-            type='password'
-            {...register('password', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Contraseña'
-          ></input>
-          {errors.password && (
-            <p className='text-red-500'>Contraseña es requerida</p>
-          )}
-
-          <button type='submit' className='rounded-md text-green-50 px-6 py-3 my-2 flex items-center bg-green-500 hover:bg-green-600'>
-            Inciar Sesión
-          </button>
-        </form>
-        <p className='flex gap-x-2 justify-between'>
-          No tienes una cuenta? <Link to='/register' className='text-sky-500'>Registrate</Link>{' '}
-        </p>
-      </div>
+  return <main className='page-container flex min-h-[calc(100vh-4rem)] items-center justify-center py-12'>
+    <div className='surface w-full max-w-md p-6 sm:p-10'>
+      <p className='eyebrow'>Tu espacio</p>
+      <h1 className='mb-2 text-3xl font-bold text-slate-900'>Iniciar sesión</h1>
+      <p className='mb-6 text-slate-600'>Accede a tu perfil y explora las oportunidades disponibles.</p>
+      {location.state?.registered && <div role='status' className='mb-5 rounded-lg bg-emerald-50 p-3 text-emerald-900'>Cuenta creada. Ya puedes iniciar sesión.</div>}
+      {errors.length > 0 && <div role='alert' className='error-box'>{errors.join(' ')}</div>}
+      <form onSubmit={onSubmit} className='space-y-5'>
+        <div><label htmlFor='login-username' className='field-label'>Usuario</label>
+          <input id='login-username' autoComplete='username' className='field' {...register('username', { required: true })} />
+          {fieldErrors.username && <p className='field-error'>Ingresa tu usuario.</p>}</div>
+        <div><label htmlFor='login-password' className='field-label'>Contraseña</label>
+          <input id='login-password' type='password' autoComplete='current-password' className='field' {...register('password', { required: true })} />
+          {fieldErrors.password && <p className='field-error'>Ingresa tu contraseña.</p>}</div>
+        <button disabled={loading || isSubmitting} type='submit' className='button-primary w-full'>{isSubmitting ? 'Ingresando…' : 'Ingresar'}</button>
+      </form>
+      <p className='mt-6 text-sm text-slate-600'>¿No tienes una cuenta? <Link to='/register' onClick={clearErrors} className='font-semibold text-emerald-800 underline'>Regístrate</Link></p>
     </div>
-  );
+  </main>;
 };
 
 export default LoginPage;

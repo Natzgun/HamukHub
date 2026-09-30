@@ -1,80 +1,42 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSships } from '../../context/SshipsContext';
 import { Link } from 'react-router-dom';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-dayjs.extend(utc);
 
 const ScholarshipPage = () => {
-  const { getBecas, becas, eliminarBeca } = useSships();
-  //console.log(becas);
-
+  const { getBecas, becas, eliminarBeca, loading, error } = useSships();
+  const [actionError, setActionError] = useState('');
   useEffect(() => {
-    getBecas();
-  }, []);
+    const controller = new AbortController();
+    getBecas(controller.signal);
+    return () => controller.abort();
+  }, [getBecas]);
 
-  return (
-    <div className='container mx-auto py-36 px-4'>
-      <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {becas.map((beca) => (
-          <div
-            key={beca._id}
-            className='rounded-lg shadow-lg flex flex-col justify-between'
-          >
-            <img
-              className='rounded-t-lg'
-              /* src='https://unab.edu.pe/nueva-web/wp-content/uploads/2022/05/280366694_535258778158195_6699245807989852168_n.jpg' */
-              src={beca.image}
-              alt=''
-            />
-            <div className='p-5'>
-              <h2 className='text-2xl text-slate-700 mb-3 font-bold'>
-                {beca.title}
-              </h2>
-              <p className='text-lg font-normal mb-3 text-gray-600'>
-                {beca.description}
-              </p>
-            </div>
-            <div className='p-5 flex justify-between'>
-              <div>
-                <p className='text-lg font-normal mb-3 text-gray-700'>
-                  <label htmlFor='' className='text-green-500'>
-                    Disponible hasta:{' '}
-                  </label>
-                  {dayjs(beca.date).utc().format('DD/MM/YYYY')}
-                </p>
-                <p className='text-lg font-normal mb-3 text-gray-700'>
-                  {beca.country}
-                </p>
-                <p className='text-lg font-normal mb-3 text-gray-700'>
-                  {beca.continent}
-                </p>
-              </div>
+  const remove = async (beca) => {
+    if (!window.confirm(`¿Eliminar la beca "${beca.title}"? Esta acción no se puede deshacer.`)) return;
+    setActionError('');
+    try { await eliminarBeca(beca.id); }
+    catch (err) { setActionError(err.message); }
+  };
 
-              <div className='gap-x-2'>
-                <button
-                  onClick={() => {
-                    eliminarBeca(beca._id);
-                  }}
-                  type='submit'
-                  className='rounded-md text-green-50 px-6 py-3 my-2 flex items-center bg-red-500 hover:bg-red-600'
-                >
-                  Eliminar
-                </button>
-                <Link
-                  to={`/beca/${beca._id}`}
-                  type='submit'
-                  className='rounded-md text-green-50 px-6 py-3 my-2 flex items-center bg-green-500 hover:bg-green-600'
-                >
-                  Actualizar
-                </Link>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+  return <main className='page-container py-10 sm:py-16'>
+    <div className='mb-8 flex flex-wrap items-center justify-between gap-4'>
+      <div><p className='eyebrow'>Administración</p><h1 className='text-3xl font-bold text-slate-900'>Gestionar becas</h1></div>
+      <Link className='button-primary' to='/add-beca'>Nueva beca</Link>
     </div>
-  );
+    {(error || actionError) && <div role='alert' className='error-box mb-6'>{error || actionError} <button type='button' onClick={() => getBecas()} className='font-semibold underline'>Reintentar</button></div>}
+    {loading ? <p role='status'>Cargando becas…</p> : becas.length === 0 && !error ? <p className='surface p-8 text-slate-700'>No hay becas publicadas. Crea la primera para empezar.</p> :
+      <div className='grid gap-5 sm:grid-cols-2 lg:grid-cols-3'>
+        {becas.map((beca) => <article key={beca.id} className='surface flex min-w-0 flex-col overflow-hidden'>
+          <img src={beca.image} alt='' className='h-44 w-full object-cover' loading='lazy' />
+          <div className='flex flex-1 flex-col p-5'><p className='eyebrow'>{beca.country} · {beca.continent}</p>
+            <h2 className='mb-2 break-words text-xl font-bold text-slate-900'>{beca.title}</h2>
+            <p className='mb-5 line-clamp-3 flex-1 text-slate-600'>{beca.description}</p>
+            <div className='flex flex-wrap gap-3'><Link className='button-secondary' to={`/beca/${beca.id}`}>Editar</Link>
+              <button type='button' className='button-danger' onClick={() => remove(beca)}>Eliminar</button></div>
+          </div>
+        </article>)}
+      </div>}
+  </main>;
 };
 
 export default ScholarshipPage;

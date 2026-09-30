@@ -1,81 +1,38 @@
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
-import { useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 
 const RegisterPage = () => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
-  const { isAuthenticated, signup, user, errors: registerErrors } = useAuth();
-  const navigation = useNavigate();
+  const { register, handleSubmit, formState: { errors: fieldErrors, isSubmitting } } = useForm();
+  const { isAuthenticated, loading, signup, errors, clearErrors } = useAuth();
+  const navigate = useNavigate();
+  if (isAuthenticated) return <Navigate to='/profile' replace />;
 
-  useEffect(() => {
-    if (isAuthenticated && user.email !== 'erickmalcoaccha@gmail.com') {
-      navigation('/scholarships');
-    }
-  }, [isAuthenticated]);
-
-  const onSubmitReg = handleSubmit(async (values) => {
-    signup(values);
+  const onSubmit = handleSubmit(async (values) => {
+    if (await signup(values)) navigate('/login', { state: { registered: true } });
   });
-  return (
-    <div className='flex h-[calc(100vh)] items-center justify-center bg-slate-50 text-gray-300'>
-      <div className='bg-white max-w-md w-full p-10 rounded-lg shadow-xl'>
-        <h2 className='text-3xl mb-3 text-slate-500 font-bold'>Registro</h2>
-        {registerErrors.map((error, i) => (
-          <div className='bg-red-500 p-2' key={i}>
-            {error}
-          </div>
-        ))}
-        <form onSubmit={onSubmitReg}>
-          <input
-            type='text'
-            {...register('username', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Usuario'
-          ></input>
-          {errors.username && (
-            <p className='text-red-500'>Nombre de usuario es requerido</p>
-          )}
 
-          <input
-            type='email'
-            {...register('email', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Correo'
-          ></input>
-          {errors.email && <p className='text-red-500'>Email es requerido</p>}
-
-          <input
-            type='text'
-            {...register('career', { required: false })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Carrera'
-          ></input>
-          {errors.career && <p className='text-yellow-300'>La carrera es opcional</p>}
-
-          <input
-            type='password'
-            {...register('password', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Contraseña'
-          ></input>
-          {errors.password && (
-            <p className='text-red-500'>Contraseña es requerida</p>
-          )}
-          <button type='submit' className='rounded-md text-green-50 px-6 py-3 my-2 flex items-center bg-green-500 hover:bg-green-600'>
-            Registrarse
-          </button>
-        </form>
-        <p className='flex gap-x-2 justify-between'>
-          Ya tienes una cuenta? <Link to='/login' className='text-sky-500'>Inicia Sesión</Link>{' '}
-        </p>
-      </div>
+  return <main className='page-container flex min-h-[calc(100vh-4rem)] items-center justify-center py-12'>
+    <div className='surface w-full max-w-md p-6 sm:p-10'>
+      <p className='eyebrow'>Únete a Hamuk</p>
+      <h1 className='mb-2 text-3xl font-bold text-slate-900'>Crear cuenta</h1>
+      <p className='mb-6 text-slate-600'>Regístrate y descubre nuevas oportunidades de estudio.</p>
+      {errors.length > 0 && <div role='alert' className='error-box'>{errors.join(' ')}</div>}
+      <form onSubmit={onSubmit} className='space-y-5'>
+        <div><label htmlFor='register-username' className='field-label'>Usuario</label>
+          <input id='register-username' autoComplete='username' className='field' {...register('username', { required: true })} />
+          {fieldErrors.username && <p className='field-error'>Ingresa un usuario.</p>}</div>
+        <div><label htmlFor='register-email' className='field-label'>Correo electrónico</label>
+          <input id='register-email' type='email' autoComplete='email' className='field' {...register('email', { required: true })} />
+          {fieldErrors.email && <p className='field-error'>Ingresa un correo válido.</p>}</div>
+        <div><label htmlFor='register-password' className='field-label'>Contraseña</label>
+          <input id='register-password' type='password' autoComplete='new-password' className='field' {...register('password', { required: true })} />
+          {fieldErrors.password && <p className='field-error'>Ingresa una contraseña.</p>}</div>
+        <button disabled={loading || isSubmitting} type='submit' className='button-primary w-full'>{isSubmitting ? 'Creando cuenta…' : 'Crear cuenta'}</button>
+      </form>
+      <p className='mt-6 text-sm text-slate-600'>¿Ya tienes cuenta? <Link to='/login' onClick={clearErrors} className='font-semibold text-emerald-800 underline'>Inicia sesión</Link></p>
     </div>
-  );
+  </main>;
 };
 
 export default RegisterPage;

@@ -1,131 +1,63 @@
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useSships } from '../../context/SshipsContext';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect } from 'react';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-dayjs.extend(utc);
+import { toFormValues, toScholarshipRequest } from './scholarshipForm';
 
 const SshipFormPage = () => {
-  const { register, handleSubmit, setValue } = useForm();
-  const { beca, createBeca, getBeca, actualizarBeca } = useSships();
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    defaultValues: { requirements: '' },
+  });
+  const { createBeca, getBeca, actualizarBeca } = useSships();
+  const { id } = useParams();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(!!id);
   const navigate = useNavigate();
-  const params = useParams();
-  //console.log(beca);
 
   useEffect(() => {
-    const loadBeca = async () => {
-      if (params.id) {
-        const sship = await getBeca(params.id);
-        setValue('title', sship.title);
-        setValue('description', sship.description);
-        setValue(
-          'date',
-          sship.date ? dayjs(sship.date).utc().format('YYYY-MM-DD') : ''
-        );
-        setValue('country', sship.country);
-        setValue('continent', sship.continent);
-        setValue('moreInfo', sship.moreInfo);
-        setValue('image', sship.image);
-        setValue('completed', sship.completed);
-      }
-    };
-    loadBeca();
-  }, []);
+    if (!id) return;
+    const controller = new AbortController();
+    setLoading(true);
+    getBeca(id, controller.signal).then((beca) => {
+      if (!controller.signal.aborted) reset(toFormValues(beca));
+    }).catch((err) => { if (!controller.signal.aborted) setError(err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [id, getBeca, reset]);
 
-  const onSubmitReg = handleSubmit((data) => {
-    if (params.id) {
-      actualizarBeca(params.id, {
-        ...data,
-        date: dayjs.utc(data.date).format(),
-      });
-    } else {
-      createBeca({
-        ...data,
-        date: dayjs.utc(data.date).format(),
-      });
+  const onSubmit = handleSubmit(async (values) => {
+    setError('');
+    const payload = toScholarshipRequest(values);
+    try {
+      if (id) await actualizarBeca(id, payload);
+      else await createBeca(payload);
+      navigate('/becas');
+    } catch (err) {
+      setError(err.message);
     }
-    navigate('/becas');
   });
 
-  return (
-    <div className='container mx-auto py-20 px-8 md:px-16 bg-white text-gray-500'>
-      <h2 className='text-3xl mb-8 text-slate-500 lg:px-12'>Formulario beca</h2>
+  if (loading) return <main className='page-container py-16' role='status'>Cargando beca…</main>;
 
-      <form
-        onSubmit={onSubmitReg}
-        className='bg-white grid md:grid-cols-2 gap-6'
-      >
-        <div className='lg:px-12'>
-          <label htmlFor='title'>Titulo</label>
-          <input
-            type='text'
-            {...register('title', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Titulo'
-            autoFocus
-          ></input>
-          {/* {errors.email && <p className='text-red-500'>Email es requerido</p>} */}
-
-          <label htmlFor='description'>Descripcion</label>
-          <textarea
-            rows='3'
-            {...register('description', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Descripcion'
-          ></textarea>
-          {/* {errors.password && (
-            <p className='text-red-500'>Contraseña es requerida</p>
-          )} */}
-          <label htmlFor='image'>Imagen</label>
-          <input
-            type='text'
-            {...register('image', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Url de la imagen'
-            autoFocus
-          ></input>
-          <label htmlFor='date'>Fecha</label>
-          <input
-            type='date'
-            {...register('date', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-          />
-        </div>
-        <div>
-          <label htmlFor='category'>País</label>
-          <input
-            type='text'
-            {...register('country', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Escriba aqui el pais'
-            autoFocus
-          ></input>
-
-          <label htmlFor='continent'>Continente</label>
-          <input
-            type='text'
-            {...register('continent', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Escriba aqui el continente'
-            autoFocus
-          ></input>
-
-          <label htmlFor='moreInfo'>Informacion externa</label>
-          <input
-            type='text'
-            {...register('moreInfo', { required: true })}
-            className='w-full bg-slate-100 text-black px-4 py-2 rounded-lg my-2'
-            placeholder='Link de la pagina externa'
-            autoFocus
-          ></input>
-          <button className='rounded-md text-green-50 px-6 py-3 my-2 flex items-center bg-green-500 hover:bg-green-600'>
-            Crear
-          </button>
-        </div>
-      </form>
+  return <main className='page-container py-10 sm:py-16'>
+    <div className='mb-8 flex flex-wrap items-end justify-between gap-4'>
+      <div><p className='eyebrow'>Administración</p><h1 className='text-3xl font-bold text-slate-900'>{id ? 'Editar beca' : 'Nueva beca'}</h1></div>
+      <Link className='button-secondary' to='/becas'>Volver a becas</Link>
     </div>
-  );
+    <form onSubmit={onSubmit} className='surface grid gap-5 p-5 sm:grid-cols-2 sm:p-8'>
+      {error && <div role='alert' className='error-box sm:col-span-2'>{error}</div>}
+      <div><label className='field-label' htmlFor='title'>Título</label><input id='title' className='field' {...register('title', { required: true })} />{errors.title && <p className='field-error'>El título es obligatorio.</p>}</div>
+      <div className='sm:col-span-2'><label className='field-label' htmlFor='description'>Descripción</label><textarea id='description' rows='4' className='field' {...register('description', { required: true })} />{errors.description && <p className='field-error'>La descripción es obligatoria.</p>}</div>
+      <div><label className='field-label' htmlFor='image'>URL de imagen</label><input id='image' type='url' className='field' {...register('image', { required: true })} />{errors.image && <p className='field-error'>La URL de imagen es obligatoria.</p>}</div>
+      <div><label className='field-label' htmlFor='moreInfo'>Enlace de la convocatoria</label><input id='moreInfo' type='url' className='field' {...register('moreInfo', { required: true })} />{errors.moreInfo && <p className='field-error'>El enlace es obligatorio.</p>}</div>
+      <div><label className='field-label' htmlFor='country'>País</label><input id='country' className='field' {...register('country', { required: true })} />{errors.country && <p className='field-error'>El país es obligatorio.</p>}</div>
+      <div><label className='field-label' htmlFor='continent'>Continente</label><input id='continent' className='field' {...register('continent', { required: true })} />{errors.continent && <p className='field-error'>El continente es obligatorio.</p>}</div>
+      <div className='sm:col-span-2'><label className='field-label' htmlFor='requirements'>Requisitos (uno por línea)</label>
+        <textarea id='requirements' rows='4' className='field' {...register('requirements')} placeholder='Ejemplo: Constancia de estudios' />
+        <p className='mt-1 text-sm text-slate-600'>Deja este campo vacío si no hay requisitos.</p></div>
+      <div className='sm:col-span-2'><button className='button-primary' type='submit' disabled={isSubmitting}>{isSubmitting ? 'Guardando…' : id ? 'Guardar cambios' : 'Publicar beca'}</button></div>
+    </form>
+  </main>;
 };
 
 export default SshipFormPage;

@@ -1,38 +1,20 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Profile = () => {
   const { user } = useAuth();
-  //console.log(user);
-  return (
-    <div
-      data-name='profile'
-      className='flex flex-col h-[calc(100vh)] items-center justify-center bg-white text-green-300'
-    >
-      <div className='bg-green-100 shadow-lg max-w-md w-full p-4'>
-      <div className=''>
-        <h2 className='text-3xl text-center mb-3 text-slate-700 font-bold'>Perfil</h2>
-        <img
-          className='rounded-t-lg'
-          src='https://unab.edu.pe/nueva-web/wp-content/uploads/2022/05/280366694_535258778158195_6699245807989852168_n.jpg'
-          alt=''
-        />
-        <div className='p-5'>
-          <h2 className='text-2xl text-slate-700 mb-3 font-bold'>
-            Nombre de usuario: <span className='font-normal'>{user.username}</span>
-          </h2>
-          <p className='text-slate-600 text-2xl font-bold mb-2'>
-            Correo: <span className='font-normal'>{user.email}</span>
-          </p>
-          <p className='text-slate-600 text-2xl font-bold'>
-            Carrera: <span className='font-normal'>{user.career}</span>
-          </p>
-        </div>
-      </div>
-      </div>
-
-      
-    </div>
-  );
+  return <main className='page-container py-10 sm:py-16'>
+    <p className='eyebrow'>Tu cuenta</p><h1 className='mb-8 text-3xl font-bold text-slate-900'>Mi perfil</h1>
+    <section className='surface max-w-2xl p-6 sm:p-10' aria-label='Datos de la cuenta'>
+      <div className='mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-2xl font-bold text-emerald-900' aria-hidden='true'>{user.username[0].toUpperCase()}</div>
+      <dl className='space-y-5'>
+        <div><dt className='text-sm font-medium text-slate-600'>Usuario</dt><dd className='break-words text-lg font-semibold text-slate-900'>{user.username}</dd></div>
+        <div><dt className='text-sm font-medium text-slate-600'>Correo electrónico</dt><dd className='break-all text-lg text-slate-900'>{user.email}</dd></div>
+        <div><dt className='text-sm font-medium text-slate-600'>Tipo de cuenta</dt><dd className='text-lg text-slate-900'>{user.roles?.includes('ADMIN') ? 'Administración' : 'Estudiante'}</dd></div>
+      </dl>
+      <Link to={user.roles?.includes('ADMIN') ? '/becas' : '/scholarships'} className='button-primary mt-8 inline-block'>{user.roles?.includes('ADMIN') ? 'Gestionar becas' : 'Explorar becas'}</Link>
+    </section>
+  </main>;
 };
 
 export default Profile;

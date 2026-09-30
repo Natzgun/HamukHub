@@ -3,7 +3,20 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    font-family: "Raleway";
-  }
+  body { @apply bg-slate-50 text-slate-800 antialiased; }
+  :focus-visible { @apply outline outline-2 outline-offset-2 outline-emerald-700; }
+}
+
+@layer components {
+  .page-container { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+  .surface { @apply rounded-2xl border border-slate-200 bg-white shadow-sm; }
+  .eyebrow { @apply mb-2 text-xs font-bold uppercase tracking-widest text-emerald-800; }
+  .nav-link { @apply rounded-lg px-3 py-2 text-sm font-semibold; }
+  .button-primary { @apply rounded-lg bg-emerald-700 px-5 py-2.5 font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60; }
+  .button-secondary { @apply rounded-lg border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-800 hover:bg-slate-100; }
+  .button-danger { @apply rounded-lg border border-red-200 bg-white px-5 py-2.5 font-semibold text-red-800 hover:bg-red-50; }
+  .field-label { @apply mb-1 block text-sm font-semibold text-slate-800; }
+  .field { @apply block w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900; }
+  .field-error { @apply mt-1 text-sm text-red-700; }
+  .error-box { @apply mb-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800; }
 }

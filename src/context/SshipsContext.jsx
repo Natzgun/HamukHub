@@ -1,82 +1,79 @@
-import { createContext, useState, useContext } from 'react';
-import {
-  createBecaRequest,
-  getBecasRequest,
-  deleteBecaRequest,
-  getBecaRequest,
-  updateBecaRequest
-} from '../api/sships';
+import { createContext, useState, useContext, useCallback } from 'react';
+import { createBecaRequest, getBecasRequest, deleteBecaRequest, getBecaRequest, updateBecaRequest } from '../api/sships';
 
 export const ScholarshipContext = createContext();
 export const useSships = () => {
   const context = useContext(ScholarshipContext);
-  if (!context) {
-    throw new Error('useAuth must be used within a AuthProvider');
-  }
+  if (!context) throw new Error('useSships must be used within a SshipProvider');
   return context;
 };
 
+const messageFrom = (err) => {
+  const data = err.response?.data;
+  if (err.response?.status === 401) return 'Tu sesión terminó. Inicia sesión de nuevo.';
+  if (err.response?.status === 403) return 'No tienes permiso para esta acción. Inicia sesión con una cuenta administradora.';
+  return typeof data === 'string' && data.trim() ? data : 'No se pudo completar la operación. Inténtalo de nuevo.';
+};
+
 export function SshipProvider({ children }) {
-  const [becas, setBeca] = useState([]);
+  const [becas, setBecas] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const getBecas = useCallback(async (signal) => {
+    setLoading(true);
+    setError('');
+    try {
+      const { data } = await getBecasRequest(signal);
+      if (!signal?.aborted) setBecas(data);
+    } catch (err) {
+      if (!signal?.aborted) setError(messageFrom(err));
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
+  }, []);
 
   const createBeca = async (beca) => {
     try {
-      const res = await createBecaRequest(beca);
-      // Este if deberi actualizar la lista de becas supuestamente
-      // if (res.status === 204) setBeca(becas.filter((newBeca) => newBeca._id !== beca._id));
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getBecas = async () => {
-    try {
-      const res = await getBecasRequest();
-      setBeca(res.data);
-      console.log(res);
-    } catch (error) {
-      console.error(error);
+      const { data } = await createBecaRequest(beca);
+      setBecas((current) => [...current, data]);
+      return data;
+    } catch (err) {
+      throw new Error(messageFrom(err));
     }
   };
 
   const eliminarBeca = async (id) => {
     try {
-      const res = await deleteBecaRequest(id);
-      if (res.status === 204) setBeca(becas.filter((beca) => beca._id !== id));
-    } catch (error) {
-      console.log(error);
+      await deleteBecaRequest(id);
+      setBecas((current) => current.filter((beca) => beca.id !== id));
+    } catch (err) {
+      throw new Error(messageFrom(err));
     }
   };
 
-  const getBeca = async (id) => {
+  const getBeca = useCallback(async (id, signal) => {
     try {
-      const res = await getBecaRequest(id);
-      console.log(res);
-      return res.data;
-    } catch (error) {
-      console.log(error);
+      const { data } = await getBecaRequest(id, signal);
+      return data;
+    } catch (err) {
+      if (signal?.aborted) return;
+      throw new Error(messageFrom(err));
     }
-  };
+  }, []);
 
   const actualizarBeca = async (id, beca) => {
     try {
-      await updateBecaRequest(id, beca);
-    } catch (error) {
-      console.log(error);
+      const { data } = await updateBecaRequest(id, beca);
+      setBecas((current) => current.map((item) => item.id === id ? data : item));
+      return data;
+    } catch (err) {
+      throw new Error(messageFrom(err));
     }
-  }
+  };
 
   return (
-    <ScholarshipContext.Provider
-      value={{
-        becas,
-        createBeca,
-        getBecas,
-        eliminarBeca,
-        getBeca,
-        actualizarBeca,
-      }}
-    >
+    <ScholarshipContext.Provider value={{ becas, loading, error, createBeca, getBecas, eliminarBeca, getBeca, actualizarBeca }}>
       {children}
     </ScholarshipContext.Provider>
   );
