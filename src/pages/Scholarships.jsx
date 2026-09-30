@@ -1,138 +1,40 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSships } from '../context/SshipsContext';
-import { BecaFilter, ButtonContinent, ButtonCountry } from '../components/Becas/BecaFilter';
+import BecaCard from '../components/Becas/BecaCard';
 
 const Scholarships = () => {
-  const { getBecas, becas } = useSships();
-  const [isDropdownVisible, setDropdownVisible] = useState(false);
-  const [isColumn1Visible, setColumn1Visible] = useState(false);
-  const [isColumn2Visible, setColumn2Visible] = useState(false);
-
-  // Estas funciones son para hacer el filtro hasta antes de getBecas
-  const [countries, setCountries] = useState([]);
-  const [continent, setContinent] = useState([]);
-  const [scholar, setScholar] = useState(becas);
-
-  const filterCountry = (country) => {
-    if (country === "All") {
-      setScholar(becas);
-      return;
-    }
-    const filteredData = becas.filter(article => article.country === country);
-		setScholar(filteredData);
-  };
-
-  const filterContinent = (continent) => {
-    if (continent === "All") {
-      setScholar(becas);
-      return;
-    }
-    const filteredData = becas.filter(article => article.continent === continent);
-		setScholar(filteredData);
-  };
-
+  const { getBecas, becas, loading, error } = useSships();
+  const [country, setCountry] = useState('');
+  const [continent, setContinent] = useState('');
   useEffect(() => {
-    const allCountries = [
-      'All',
-      ...new Set(becas.map((card) => card.country)),
-    ];
-    const allContinents = [
-      'All',
-      ...new Set(becas.map((card) => card.continent)),
-    ];
-    setContinent(allContinents);
-    setCountries(allCountries);
-    setScholar(becas);
-  }, [becas])
+    const controller = new AbortController();
+    getBecas(controller.signal);
+    return () => controller.abort();
+  }, [getBecas]);
 
-  useEffect(() => {
-    getBecas();
-  }, []);
+  const countries = useMemo(() => [...new Set(becas.map((beca) => beca.country))].sort(), [becas]);
+  const continents = useMemo(() => [...new Set(becas.map((beca) => beca.continent))].sort(), [becas]);
+  const results = becas.filter((beca) => (!country || beca.country === country) && (!continent || beca.continent === continent));
 
-  const toggleDropdown = () => {
-    setDropdownVisible((prevState) => !prevState);
-    setColumn1Visible(false);
-    setColumn2Visible(false);
-  };
-
-  const toggleColumn1 = () => {
-    setColumn1Visible((prevState) => !prevState);
-    setColumn2Visible(false);
-  };
-
-  const toggleColumn2 = () => {
-    setColumn2Visible((prevState) => !prevState);
-    setColumn1Visible(false);
-  };
-
-  // Aqui puede agregar un if que verifique si hay o no tareas
-  return (
-    <div className='container mx-auto py-20 px-4'>
-      <button
-        onClick={toggleDropdown}
-        className='p-1.5 m-0.5 rounded-lg bg-green-500 text-white hover:bg-green-600'
-      >
-        Filtrar resultados
-      </button>
-      {isDropdownVisible && (
-        <div className='sm:grid sm:grid-cols-2 gap-4 items-center justify-center h-32 sm:h-20 transition-height duration-300 ease-in'>
-          {/* Contenido de la barra dropdown */}
-          <div
-            className='bg-red-500 text-white p-4 text-center cursor-pointer rounded-lg'
-            onClick={toggleColumn1}
-          >
-            Paises
-          </div>
-          <div
-            className='bg-blue-500 text-white p-4 text-center cursor-pointer rounded-lg'
-            onClick={toggleColumn2}
-          >
-            Continentes
-          </div>
-          {/* <div className='bg-green-500 text-white p-4 text-center' onClick={toggleColumn1}>
-          <button>Columna 3</button>
-          </div>
-          <div className='bg-yellow-500 text-white p-4 text-center' onClick={toggleColumn1}>
-          <button>Columna 4</button>
-          </div> */}
-        </div>
-      )}
-
-      {isColumn1Visible && (
-        <div className='sm:grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2 rounded-lg bg-green-400'>
-          <ul>
-            <ButtonCountry countries={countries} filterCountry={filterCountry}/>
-          </ul>
-        </div>
-      )}
-      {isColumn2Visible && (
-        <div className='sm:grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2 rounded-lg bg-yellow-400'>
-          <ul>
-            <ButtonContinent continent={continent} filterContinent={filterContinent}/>
-          </ul>
-        </div>
-      )}
-      <BecaFilter scholar={scholar}/>
-      
+  return <main className='page-container py-10 sm:py-16'>
+    <div className='mb-8 max-w-2xl'><p className='eyebrow'>Oportunidades abiertas</p>
+      <h1 className='mb-3 text-3xl font-bold text-slate-900 sm:text-4xl'>Encuentra tu próxima beca</h1>
+      <p className='text-slate-600'>Explora convocatorias y filtra por el lugar donde quieres estudiar.</p></div>
+    <div className='surface mb-8 grid gap-4 p-5 sm:grid-cols-2'>
+      <div><label htmlFor='country-filter' className='field-label'>País</label><select id='country-filter' value={country} onChange={(event) => setCountry(event.target.value)} className='field'>
+        <option value=''>Todos los países</option>{countries.map((value) => <option key={value} value={value}>{value}</option>)}
+      </select></div>
+      <div><label htmlFor='continent-filter' className='field-label'>Continente</label><select id='continent-filter' value={continent} onChange={(event) => setContinent(event.target.value)} className='field'>
+        <option value=''>Todos los continentes</option>{continents.map((value) => <option key={value} value={value}>{value}</option>)}
+      </select></div>
     </div>
-  );
+    {error && <div role='alert' className='error-box mb-6'>{error} <button type='button' className='font-semibold underline' onClick={() => getBecas()}>Reintentar</button></div>}
+    {loading ? <p role='status'>Cargando oportunidades…</p> : !error && <>
+      <p className='mb-5 text-sm font-medium text-slate-600'>{results.length} {results.length === 1 ? 'beca disponible' : 'becas disponibles'}</p>
+      {results.length ? <div className='grid gap-6 sm:grid-cols-2 xl:grid-cols-3'>{results.map((beca) => <BecaCard key={beca.id} beca={beca} />)}</div>
+        : <div className='surface p-8 text-slate-700'>No hay becas para estos filtros. Prueba con otro país o continente.</div>}
+    </>}
+  </main>;
 };
-
-{
-  /* <div
-  data-name='login'
-  className='flex h-[calc(100vh)] items-center justify-center bg-white text-gray-700'
->
-  <div className='bg-slate-800 max-w-md w-full p-10'>
-    <h2 className='text-7xl mb-3 text-slate-500'>Becas uwu</h2>
-    {becas.map((beca) => (
-      <div key={beca._id} className='bg-slate-100 my-2 p-4'>
-        <h1 className='font-bold'>{beca.title}</h1>
-        <p>{beca.description}</p>
-      </div>
-    ))}
-  </div>
-</div> */
-}
 
 export default Scholarships;
